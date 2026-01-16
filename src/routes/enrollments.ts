@@ -1,5 +1,5 @@
 import express from "express";
-import { and, eq, getTableColumns } from "drizzle-orm";
+import { and, eq, getTableColumns, sql } from "drizzle-orm";
 
 import { db } from "../db/index";
 import { classes, departments, enrollments, subjects, user } from "../db/schema/index";
@@ -51,12 +51,24 @@ router.post("/", async (req, res) => {
 
     if (!classRecord) return res.status(404).json({ error: "Class not found" });
 
+
+     // Check class capacity
+     const [enrollmentCount] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(enrollments)
+      .where(eq(enrollments.classId, classId));
+    const currentCount = Number(enrollmentCount?.count ?? 0);
+    if (currentCount >= classRecord.capacity) {
+      return res.status(409).json({ error: "Class is full" });
+    }
+
+
     const [student] = await db
       .select()
       .from(user)
-      .where(eq(user.id, studentId));
+      .where(and(eq(user.id, studentId), eq(user.role, "student")));
 
-    if (!student) return res.status(404).json({ error: "Student not found" });
+    if (!student) return res.status(404).json({ error: "Student not found or user is not a student" });
 
     const [existingEnrollment] = await db
       .select({ id: enrollments.id })
