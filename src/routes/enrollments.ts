@@ -53,8 +53,14 @@ router.post("/", async (req, res) => {
 
 
      // Check class capacity
-     const [enrollmentCount] = await db.select({ count: sql<number>`count(*)` })
-     .from(enrollments).where(eq(enrollments.classId, classId));
+     const [enrollmentCount] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(enrollments)
+      .where(eq(enrollments.classId, classId));
+    const currentCount = Number(enrollmentCount?.count ?? 0);
+    if (currentCount >= classRecord.capacity) {
+      return res.status(409).json({ error: "Class is full" });
+    }
 
 
     const [student] = await db
