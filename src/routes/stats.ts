@@ -51,7 +51,8 @@ router.get("/overview", async (req, res) => {
 router.get("/latest", async (req, res) => {
   try {
     const { limit = 5 } = req.query;
-    const limitPerPage = Math.max(1, +limit);
+    const parsedLimit = Number(limit); 
+    const limitPerPage = Number.isFinite(parsedLimit) ? Math.max(1, parsedLimit) : 5;
 
     const [latestClasses, latestTeachers] = await Promise.all([
       db

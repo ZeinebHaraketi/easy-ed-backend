@@ -8,7 +8,7 @@ import {
   enrollments,
   subjects,
   user,
-} from "../db/schema/index.js";
+} from "../db/schema/index";
 
 const router = express.Router();
 
@@ -74,12 +74,18 @@ router.post("/", async (req, res) => {
   try {
     const { code, name, description } = req.body;
 
+    if (!code || !name) { 
+      return res.status(400).json({ error: "Missing required fields: code, name" }); 
+    }
+
     const [createdDepartment] = await db
       .insert(departments)
       .values({ code, name, description })
       .returning({ id: departments.id });
 
-    if (!createdDepartment) throw Error;
+      if (!createdDepartment) {  
+        throw new Error("Insert returned no result"); 
+      }
 
     res.status(201).json({ data: createdDepartment });
   } catch (error) {

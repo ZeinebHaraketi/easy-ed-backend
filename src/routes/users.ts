@@ -3,7 +3,6 @@ import { and, desc, eq, ilike, or, sql, getTableColumns } from "drizzle-orm";
 
 import { db } from "../db/index";
 import { classes, departments, enrollments, subjects, user } from "../db/schema/index";
-
 const router = express.Router();
 
 // Get all users with optional search, role filter, and pagination

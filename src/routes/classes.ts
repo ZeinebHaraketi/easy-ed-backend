@@ -1,5 +1,6 @@
 import express from "express";
 import { and, desc, eq, getTableColumns, ilike, or, sql } from "drizzle-orm";
+import crypto from "crypto";
 
 import { db } from "../db/index";
 import { classes, departments, enrollments, subjects, user } from "../db/schema/index";
@@ -11,8 +12,8 @@ router.get("/", async (req, res) => {
   try {
     const { search, subject, teacher, page = 1, limit = 10 } = req.query;
 
-    const currentPage = Math.max(1, +page);
-    const limitPerPage = Math.max(1, +limit);
+    const currentPage = Math.max(1, Number(page) || 1); 
+    const limitPerPage = Math.max(1, Math.min(100, Number(limit) || 10));
     const offset = (currentPage - 1) * limitPerPage;
 
     const filterConditions = [];
@@ -90,20 +91,27 @@ router.post("/", async (req, res) => {
       status,
       bannerUrl,
       bannerCldPubId,
+      schedules,
     } = req.body;
+
+    if (!name || !teacherId || !subjectId) { 
+       return res.status(400).json({
+          error: "name, teacherId, and subjectId are required" 
+        }); 
+      }
 
     const [createdClass] = await db
       .insert(classes)
       .values({
         subjectId,
-        inviteCode: Math.random().toString(36).substring(2, 9),
+        inviteCode: crypto.randomBytes(6).toString("base64url"),
         name,
         teacherId,
         bannerCldPubId,
         bannerUrl,
         capacity,
         description,
-        schedules: [],
+        schedules: schedules || [],
         status,
       })
       .returning({ id: classes.id });
